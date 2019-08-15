@@ -15,6 +15,6 @@ This plugin is in beta - full help documentation will be added in due course.
 For testing, a QGIS project containing the MapAction templates is stored in the 'test' folder of the plugin.
 
 ## Issues
-The main map object in the Layout must have an id 'main'.
+This is the initial conversion from the QGIS 2 version - the basic export functionality should work but is by no means production ready. The metadata editing UI is not working yet, and it needs a good tidy up. 
 
-Test line
+The main map object in the Layout must have an id 'main'.
