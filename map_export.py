@@ -7,7 +7,7 @@
                               -------------------
         begin                : 2017-09-01
         git sha              : $Format:%H$
-        copyright            : (C) 2017 by MapAction
+        copyright            : (C) 2019 by MapAction
         email                : ascott@mapaction.org
  ***************************************************************************/
 
@@ -31,36 +31,27 @@ import tempfile
 import datetime
 import zipfile
 import xml.etree.cElementTree as ET
-from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-from qgis.PyQt.QtWidgets import QAction
-from qgis.PyQt.QtGui import QIcon
-from . import resources
-# from qgis.core import QgsMapLayerRegistry
-from qgis.core import QgsProject
-from qgis.core import QgsMapLayer
-from qgis.core import *
-# from PyQt4.QtCore import *
-from qgis.utils import *
-from qgis.gui import QgsMessageBar
-import xml.etree.cElementTree as ET
-import subprocess
-import site
-import csv
-msgBar = iface.messageBar()
-
-
-from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QFileInfo, QDir, QUrl, QTimer, Qt, QObject 
+from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QFileInfo, QDir, QUrl, QTimer, Qt, QObject
 from qgis.PyQt.QtWidgets import QAction, QListWidgetItem, QFileDialog, QDialogButtonBox, QMenu, QMessageBox, QApplication
 from qgis.PyQt.QtGui import QIcon, QPainter, QCursor, QDesktopServices
 from qgis.PyQt.QtPrintSupport import QPrinter
-
-from qgis.core import *
+# from . import resources
+from qgis.core import QgsProject, QgsMapLayer, QgsLayoutExporter, QgsExpressionContextUtils
+from qgis.utils import *
 from qgis.gui import QgsMessageBar
+# import xml.etree.cElementTree as ET
+import subprocess
+import site
+import csv
+
 
 # Initialize Qt resources from file resources.py
 from . import resources
+
 # Import the code for the dialog
 from .map_export_dialog import MapExportDialog
+
+msgBar = iface.messageBar()
 
 
 class MapExport(object):
@@ -68,7 +59,6 @@ class MapExport(object):
 
     def __init__(self, iface):
         """Constructor.
-
         :param iface: An interface instance that will be passed to this class
             which provides the hook by which you can manipulate the QGIS
             application at run time.
@@ -88,16 +78,12 @@ class MapExport(object):
         if os.path.exists(locale_path):
             self.translator = QTranslator()
             self.translator.load(locale_path)
-
             if qVersion() > '4.3.3':
                 QCoreApplication.installTranslator(self.translator)
 
         # Create the dialog (after translation) and keep reference
         self.dlg = MapExportDialog()
-        
         self.arret = False
-
-    # noinspection PyMethodMayBeStatic
 
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
@@ -116,23 +102,21 @@ class MapExport(object):
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        # Create action that will start plugin configuration
-       
         self.action = QAction(QIcon(':/plugins/MapExport/icons/icon.png'),
                               self.tr(u'Export JPG and PDF and zip up'),
                               self.iface.mainWindow()
                               )
        
-         # Connect the action to the run method
+        # Connect the action to the run method
         self.action.triggered.connect(self.run)
 
         # Connect to the export button to do the real work
         self.dlg.exportButton.clicked.connect(self.saveFile)
 
-          # Connect to the update button to update variable values
+        # Connect to the update button to update variable values
         self.dlg.updateVarVals.clicked.connect(self.updateVars)
 
-          # Connect to the browser button to select export folder
+        # Connect to the browser button to select export folder
         self.dlg.browser.clicked.connect(self.browseDir)
 
         # Connect some actions to manage dialog status while another project is opened
@@ -148,7 +132,6 @@ class MapExport(object):
         self.dlg.btnCancel.hide()
         self.dlg.btnClose = self.dlg.buttonBox.button(QDialogButtonBox.Close)
 
-
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
 
@@ -156,19 +139,9 @@ class MapExport(object):
         # self.iface.removePluginMenu(u'&Map Export', self.helpAction)
         self.iface.removeToolBarIcon(self.action)
 
-    def getNewCompo(self, w, cView):
-        """Function that finds new composer to be added to the list."""
-
-        nameCompo = cView.name()
-        if not w.findItems(nameCompo, Qt.MatchExactly):
-            item = QListWidgetItem()
-            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-            item.setCheckState(Qt.Unchecked)
-            item.setText(nameCompo)
-            w.addItem(item)
-            
     def getNewComp(self, w, cView):
         """Function that finds new composer to be added to the list."""
+        """ACTION: Change names to reflect new terminology"""
 
         nameCompo = cView.name()
         item = QString()
@@ -177,6 +150,7 @@ class MapExport(object):
 
     def populateComposerSelect(self, w):
         """Called to populate the composer list when opening a new dialog."""
+        """ACTION: Change names to reflect new terminology"""
 
         # Get  all the composers in a previously emptied list
         w.clear()
@@ -186,7 +160,7 @@ class MapExport(object):
             self.dlg.composerSelect.addItem(composer_name)
 
     def populateMetadataItems(self, m, composer):
-        """Called to populate the current value of metadata items when opening a dialogue
+        """Called to populate the current value of metadata items in the Edit Metadata dialog
         Project first
         for metadata items
         if type = projects
@@ -194,6 +168,7 @@ class MapExport(object):
         else
             get current value if any using selected print composer and name
         """
+        """ACTION: Change names"""
         currProject = QgsProject.instance()
         for x in m:
             ma_variable = str(x[0])
@@ -202,10 +177,8 @@ class MapExport(object):
             ma_level = str(x[2])
             ma_level = ma_level.strip()
             if (ma_level == 'project'):
-                QgsMessageLog.logMessage('Warning: level ' + str(ma_level),  'MapExport')
-                 # get current value for variable from project and populate field
+                # get current value for each variable from project and populate field
                 if ma_variable == 'ma_country':
-                    # QgsMessageLog.logMessage('Warning: variable ' + str(QgsExpressionContextUtils.projectScope().variable(ma_variable)),  'MapExport')
                     self.dlg.maCountry.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable('ma_variable')))
                 elif ma_variable == 'ma_crs':
                     self.dlg.maCrs.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)))
@@ -213,9 +186,8 @@ class MapExport(object):
                     self.dlg.maGlide.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)))
                 elif ma_variable == 'ma_organisation':
                     self.dlg.maOrganisation.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)))
+            # Get the current value of the variable if it exists and populate the field
             elif (ma_level == 'composer'):
-#                if ma_variable =='ma_language':
- #                   self.dlg.maLanguage.setText('french')
                 for composer in QgsProject.instance().layoutManager().printLayouts():
                     if composer.name() == self.dlg.composerSelect.currentText():
                         if ma_variable == 'ma_map_number':
@@ -230,55 +202,14 @@ class MapExport(object):
                             self.dlg.maTitle.setText(str(QgsExpressionContextUtils.layoutScope(composer).variable(ma_variable)))
                        # elif ma_variable == 'ma_created':
                         #    self.dlg.maCreated.setDate(str(QgsExpressionContextUtils.compositionScope(composer.composition()).variable(ma_variable)))
-
             else:
                 QgsMessageLog.logMessage('Warning: level ' + str(ma_level),  'MapExport')
                 
-        # output composer variables
         """
         To add:
         - themes
         
-        for composer in self.iface.activeComposers():
-            if composer.composerWindow().windowTitle() == self.dlg.composerSelect.currentText():
-                date_now = datetime.date.today().strftime("%B %d, %Y")
-                ET.SubElement(mapdata,'lastUpdated').text = date_now
-                title = composer.composerWindow().windowTitle()
-                ET.SubElement(mapdata,'jpgfilename').text = composer.composerWindow().windowTitle() + '.jpg'
-                ET.SubElement(mapdata,'pdffilename').text = composer.composerWindow().windowTitle() + '.pdf'
-                item = composer.composition().getComposerItemById('main')
-                # main_map = [item for item in composer.composition().items() if item.type() == QgsComposerItem.ComposerMap]
-                # Get the attr by name and call 
-                QgsMessageLog.logMessage('Warning: map item ' + str(item),  'MapExport')
-                QgsMessageLog.logMessage('Warning: map item type ' + str(item.type),  'MapExport')
-                map_scale = getattr(item, 'scale')()
-                
-                ET.SubElement(mapdata,'scale').text = str(map_scale)
-                map_extent = item.currentMapExtent()
-                map_xmin = map_extent.xMinimum()
-                map_xmax = map_extent.xMaximum()
-                map_ymin = map_extent.yMinimum()
-                map_ymin = map_extent.yMaximum()
-                QgsMessageLog.logMessage('Scale 1 ' + str(map_xmin), 'MapExport')
-                ET.SubElement(mapdata,'xmin').text = str(map_xmin)
-                
-                for x in metadata_list:
-                    ma_variable = str(x[0])
-                    elem_name = str(x[1])
-                    elem_name = elem_name.strip()
-                    ma_level = str(x[2])
-                    ma_level = ma_level.strip()
-                    if ma_level == 'composer':
-                        elem_value = str(QgsExpressionContextUtils.compositionScope(composer.composition()).variable(ma_variable))
-                        ET.SubElement(mapdata,elem_name).text = elem_value
-                        if elem_value.strip():
-                            QgsMessageLog.logMessage(ma_variable + ' exported as ' + elem_value, 'MapExport')
-                        else:
-                            msgBar.pushMessage('Warning: missing value for ' + ma_variable,  5)
-                            QgsMessageLog.logMessage('Warning: missing value for ' + ma_variable, 'MapExport')
-                tree = ET.ElementTree(settings)
-                """
-
+        """
  
     def browseDir(self):
         """Open the browser so the user selects the output directory."""
@@ -286,6 +217,8 @@ class MapExport(object):
         settings = QSettings()
         
         # Remember the last export location (may need changing)
+        """ACTION: Fix, last loacation not remembered"""
+
         dir = settings.value('/UI/lastSaveAsImageDir')  
         folderDialog = QFileDialog.getExistingDirectory(
             None,
@@ -340,6 +273,7 @@ class MapExport(object):
 
     def checkFilled(self, d):
         """Check if all the mandatory informations are filled."""
+        """ACTION: Check it this works"""
 
         missed = []
         for (x, y) in d:
@@ -374,6 +308,7 @@ class MapExport(object):
 
     def pageProcessed(self):
         """Increment the page progressbar."""
+        """ACTION: Fix - progress bar not working"""
 
         self.dlg.pageBar.setValue(self.dlg.pageBar.value() + 1)
 
@@ -399,24 +334,12 @@ class MapExport(object):
 
         self.arret = False
 
-    def msgEmptyPattern(self):
-        """Display a message to tell there's no pattern filename for atlas
-        TODO: offer the ability to fill the pattern name.
-        """
-        self.iface.messageBar().pushMessage(
-            self.tr(u'Empty filename pattern'),
-                self.tr(u'The print composer "{}" has an empty filename '\
-                    'pattern. {}_$feature is used as default.'
-                    ).format(self.title, self.title),
-            level = QgsMessageBar.WARNING
-            )
-
     def updateVars(self):
         # Progress bar
         # check if all the mandatory infos are filled and if ok, export
-        # if self.checkFilled(d) and self.checkFolder(folder):
-        i = 0
         # Init progressbars
+
+        i = 0
         self.initGuiButtons()
         QApplication.setOverrideCursor(Qt.BusyCursor)
 
@@ -425,19 +348,14 @@ class MapExport(object):
 
         # self.dlg.composerSelect.currentIndex():
         title = self.dlg.composerSelect.currentText()
-            
         self.dlg.printinglabel.setText(self.tr(u'Updating {}...').format(title))
 
         # process input events in order to allow canceling
         QCoreApplication.processEvents()
-        #  self.exportCompo(cView, folder, title)
-            
 
-            
-        # update variable values from form 
-        # set variable from current form value
-        # ma_country_val = self.dlg.maCountry.text()
-        # update PROJECT variable from form
+        # update PROJECT variables from form
+        """ACTION: Make this work"""
+ 
         QgsExpressionContextUtils.setProjectVariable('ma_country',self.dlg.maCountry.text())
         self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
         QgsExpressionContextUtils.setProjectVariable('ma_glide_number',self.dlg.maGlide.text())
@@ -448,10 +366,11 @@ class MapExport(object):
         self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
         QgsExpressionContextUtils.setProjectVariable('ma_country',self.dlg.maCountry.text())
         self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
-        # Language
         QgsExpressionContextUtils.setProjectVariable('ma_language',self.dlg.maLanguage.text())
         self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
-             
+
+        # update LAYOUT variables from form
+        """ACTION: Make this work"""
 
         for composer in self.iface.activeComposers():
             if composer.composerWindow().windowTitle() == self.dlg.composerSelect.currentText():
@@ -465,8 +384,6 @@ class MapExport(object):
                 # Date Created
                 QgsExpressionContextUtils.setCompositionVariable(composer.composition(),'ma_created',self.dlg.maCreated.date())
                 self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
-
-             
                 # Map Summary
                 QgsExpressionContextUtils.setCompositionVariable(composer.composition(),'ma_summary',self.dlg.maSummary.toPlainText())
                 self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
@@ -474,12 +391,6 @@ class MapExport(object):
                 QgsExpressionContextUtils.setCompositionVariable(composer.composition(),'ma_datasource',self.dlg.maDatasource.toPlainText())
                 self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
                 
-                
-
-                # str(QgsExpressionContextUtils.compositionScope(composer.composition()).variable(ma_variable))
-                # self.dlg.maMapNumber.text()
-                # date_now = datetime.date.today().strftime("%B %d, %Y")
-                # ET.SubElement(mapdata,'lastUpdated').text = date_now
         i = i + 1
         QApplication.restoreOverrideCursor()
 
@@ -506,29 +417,20 @@ class MapExport(object):
                 # keep in memory the output folder
             # Reset the GUI
             self.restoreGui()
-            
 
-        
     def saveFile(self):
         """Check if the conditions are filled to export file(s) and
         export the checked composers to the specified file format."""
+        """ACTION: Update terminology"""
 
         # Ensure list of print composers is up to date
         self.dlg.composerSelect.currentIndex()
         cView = QgsProject.instance().layoutManager().layoutByName(self.dlg.composerSelect.currentText())
-     #   for composer in QgsProject.instance().layoutManager().printLayouts():
-             
- #       cView = [composer.layoutByName(self.dlg.composerSelect.currentText()) for composer in QgsProject.instance().layoutManager().printLayouts() 
- #               if composer.name() == self.dlg.composerSelect.currentText()][0]
-        # Update variable values
-        # QgsExpressionContextUtils.setProjectVariable(ma_country,'hello world')
         
-         # get the output directory
+        # get the output directory
         folder = self.dlg.path.text()
-        # Are there at least one composer checked,
-        # an output folder indicated and an output file format chosen?
+        # Set the output path
         d = {
-            # the folder box and its text
             (self.dlg.path, folder),
             }
 
@@ -582,20 +484,12 @@ class MapExport(object):
         printer = QPrinter()
         painter = QPainter()
         exporter = QgsLayoutExporter(cView)
-        #Let's use custom export properties if there are
-        # exportSettings = self.overrideExportSetings(cView, extension)
-
         # Set page progressbar maximum value
-        # possible for atlases once the rendering has begun
-#        maxpages = cView.numPages()
-#       self.dlg.pageBar.setValue(0)
-#        self.dlg.pageBar.setMaximum(maxpages)
-           # Do the export process
+        # Do the export process
         if not os.path.exists(os.path.join(folder, title)):
             os.makedirs(os.path.join(folder, title))
         exporter.exportToPdf(os.path.join(folder, title, title + '.pdf'), QgsLayoutExporter.PdfExportSettings())
         exporter.exportToImage(os.path.join(folder, title, title + '.jpg'), QgsLayoutExporter.ImageExportSettings())
-#        self.printToRaster(cView, os.path.join(folder, title), title, '.jpg')
         self.pageProcessed()
         
         """
@@ -605,26 +499,29 @@ class MapExport(object):
         with open(os.path.join(self.plugin_dir,"input/metadata_items.csv"), 'r') as metadata_file:
             reader = csv.reader(metadata_file, delimiter=',')
             metadata_list = list(reader)
-            # print(metadata_list)
-        
+       
         settings = ET.Element("mapdoc")
         mapdata = ET.SubElement(settings, "mapdata")
-        # output QGIS variables
+
+        # output fixed QGIS variables to XML
         ET.SubElement(mapdata,'operationID').text = 'product-type-testing'
         ET.SubElement(mapdata,'versionNumber').text = '1'
         ET.SubElement(mapdata,'status').text = 'new'
         
+        """ACTION: This seeems be getting the map canvas extent, but it should be the map extent in the layout"""
         map_extent = str(self.iface.mapCanvas().extent())
         xmin = str(self.iface.mapCanvas().extent().xMinimum())
         xmax = str(self.iface.mapCanvas().extent().xMaximum())
         ymin = str(self.iface.mapCanvas().extent().yMinimum())
         ymax = str(self.iface.mapCanvas().extent().yMaximum())
+
+        #Output extent values to XML
         ET.SubElement(mapdata,'xmin').text = xmin
         ET.SubElement(mapdata,'xmax').text = xmax
         ET.SubElement(mapdata,'ymin').text = ymin
         ET.SubElement(mapdata,'ymax').text = ymax
        
-        # output project variables
+        # output project variables listed in CSV to XML
         for x in metadata_list:
             ma_variable = str(x[0])
             elem_name = str(x[1])
@@ -639,13 +536,17 @@ class MapExport(object):
                 else:
                     msgBar.pushMessage('Warning: missing value for ' + ma_variable,  5)
                     QgsMessageLog.logMessage('Warning: missing value for ' + ma_variable, 'MapExport')
-        # output composer variables
+
+        # output layout variables listed in CSV to XML
+
         """
         To add:
         - themes
         """
 
         for composer in QgsProject.instance().layoutManager().printLayouts():
+            # Set values of inbuitl variables
+
             if composer.name() == self.dlg.composerSelect.currentText():
                 date_now = datetime.date.today().strftime("%B %d, %Y")
                 ET.SubElement(mapdata,'lastUpdated').text = date_now
@@ -653,7 +554,7 @@ class MapExport(object):
                 ET.SubElement(mapdata,'jpgfilename').text = composer.name() + '.jpg'
                 ET.SubElement(mapdata,'pdffilename').text = composer.name() + '.pdf'
                 item = composer.itemById('main')
-                # main_map = [item for item in composer.composition().items() if item.type() == QgsComposerItem.ComposerMap]
+
                 # Get the attr by name and call 
                 QgsMessageLog.logMessage('Warning: map item ' + str(item),  'MapExport')
                 QgsMessageLog.logMessage('Warning: map item type ' + str(item.type),  'MapExport')
@@ -666,6 +567,8 @@ class MapExport(object):
                 map_ymin = map_extent.yMinimum()
                 map_ymin = map_extent.yMaximum()
                 QgsMessageLog.logMessage('Scale 1 ' + str(map_xmin), 'MapExport')
+
+                """ACTION: extent this to cover remaining extent fields, reconcile with earlier block"""
                 ET.SubElement(mapdata,'xmin').text = str(map_xmin)
                 
                 for x in metadata_list:
@@ -685,7 +588,6 @@ class MapExport(object):
                 tree = ET.ElementTree(settings)
                 tree.write(os.path.join(folder, title, title + '.xml'))
         
-        
         # Set the location and the file name of the zip
         zippath = os.path.join(folder, title)
         zf = zipfile.ZipFile(os.path.abspath(folder) +  os.sep + title + ".zip", "w")
@@ -694,34 +596,6 @@ class MapExport(object):
             for file in files:
                 zf.write(os.path.join(os.path.join(folder, title),file),file)
         zf.close()
- 
-    def composeritemattr(composername, mapname, attrname,feature):
-        composers = iface.activeComposers()
-        # Find the composer with the given name
-        comp = [composer.composition() for composer in composers 
-                if composer.composerWindow().windowTitle() == composername]
-        # Find the item
-        item = comp.getComposerItemById(mapname)
-        # Get the attr by name and call 
-        return getattr(item, attrname)()
-         
-
-    def printToRaster(self, cView, folder, name, ext):
-        """Export to image raster."""
-
-        for numpage in range(0, cView.numPages()):
-            if self.arret:
-                break
-            # process input events
-            QCoreApplication.processEvents()
-
-            # managing multiple pages in the composition
-            imgOut = cView.printPageAsRaster(numpage)
-            if numpage == 0:
-                imgOut.save(os.path.join(folder, name + ext))
-            else:
-                imgOut.save(os.path.join(folder, name + '_'+ str(numpage + 1) + ext))
-            self.pageProcessed()
 
     def renameDialog(self):
         """Name the dialog with the project's title or filename."""
@@ -761,4 +635,3 @@ class MapExport(object):
                 # if the dialog is already opened but not on top of other windows
                 # Put it on the top of all other widgets,
                 self.dlg.activateWindow()
-
