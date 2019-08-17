@@ -1,5 +1,5 @@
 # mapexport-qgis3
-A QGIS 3 plugin which exports and zips up a PDF, JPG, and metadata file for a selected Print Lsayou.
+A QGIS 3 plugin which exports and zips up a PDF, JPG, and metadata file for a selected Print Layout.
 
 This plugin is a QGIS implementation of MapAction's ArcGIS MapExport toolset, which prepares map filesets and metadata for upload to online repositories.
 
