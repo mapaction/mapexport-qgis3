@@ -3,7 +3,7 @@
 /***************************************************************************
  MapExport
                              A QGIS plugin
- Export a selected print composer to pdf and jpg, create a metadata file and zip
+ Export a selected print layout to pdf and jpg, create a metadata file and zip
                               -------------------
         begin                : 2017-09-01
         git sha              : $Format:%H$
@@ -41,6 +41,7 @@ from qgis.gui import QgsMessageBar
 import subprocess
 import site
 import csv
+
 # Initialize Qt resources from file resources.py
 from . import resources
 
@@ -122,61 +123,53 @@ class MapExport(object):
         # Add toolbar button and menu item0
         self.iface.addToolBarIcon(self.action)
         self.iface.addPluginToMenu(u'&Map Export', self.action)
+
+        # Connect the signal to update the current layout 
+        self.dlg.layoutSelect.currentIndexChanged.connect(self.on_layoutSelect_changed)
   
         # Hide the Cancel button at the opening
         self.dlg.btnCancel = self.dlg.buttonBox.button(QDialogButtonBox.Cancel)
         self.dlg.btnCancel.hide()
         self.dlg.btnClose = self.dlg.buttonBox.button(QDialogButtonBox.Close)
+        self.dlg.printinglabel.hide()
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
 
         self.iface.removePluginMenu(u'&Map Export', self.action)
-        # self.iface.removePluginMenu(u'&Map Export', self.helpAction)
         self.iface.removeToolBarIcon(self.action)
 
-    def getNewComp(self, w, cView):
-        """Function that finds new composer to be added to the list."""
-        """ACTION: Change names to reflect new terminology"""
+    def populateLayoutSelect(self, w):
+        """Called to populate the layout list when opening a new dialog - MapExport tab."""
 
-        nameCompo = cView.name()
-        item = QString()
-        item.setText(nameCompo)
-        w.addItem(item)
-
-    def populateComposerSelect(self, w):
-        """Called to populate the composer list when opening a new dialog."""
-        """ACTION: Change names to reflect new terminology"""
-
-        # Get  all the composers in a previously emptied list
+        # Get  all the layouts in a previously emptied list
         w.clear()
-        # Populate the drop down of composers
+        # Populate the drop down of layouts
         for cView in QgsProject.instance().layoutManager().printLayouts():
-            composer_name = cView.name()
-            self.dlg.composerSelect.addItem(composer_name)
-
-    def populateComposerSelect_2(self, w):
-        """Called to populate the composer list when opening a new dialog."""
-        """ACTION: Change names to reflect new terminology"""
-
-        # Get  all the composers in a previously emptied list
-        w.clear()
-        # Populate the drop down of composers
-        for cView in QgsProject.instance().layoutManager().printLayouts():
-            composer_name = cView.name()
-            self.dlg.composerSelect_2.addItem(composer_name)
+            layout_name = cView.name()
+            self.dlg.layoutSelect.addItem(layout_name)
+        # self.dlg.layoutName.setText(str(self.dlg.layoutSelect.currentText()))
 
 
-    def populateMetadataItems(self, m, composer):
+    def on_layoutSelect_changed(self):
+        """When changing the state of the "Check all" checkbox,
+        do the same to the layouts listed below.
+        """
+
+        layout_name = self.dlg.layoutSelect.currentText()
+        self.dlg.layoutName.setText(str(layout_name))
+
+
+    def populateMetadataItems(self, m, layout):
         """Called to populate the current value of metadata items in the Edit Metadata dialog
         Project first
         for metadata items
         if type = projects
             get current value using name warning in variable doesn't exist, prompt to create?
         else
-            get current value if any using selected print composer and name
+            get current value if any using selected print layout and name
         """
-        """ACTION: Change names"""
+
         currProject = QgsProject.instance()
         for x in m:
             ma_variable = str(x[0])
@@ -195,21 +188,21 @@ class MapExport(object):
                 elif ma_variable == 'ma_organisation':
                     self.dlg.maOrganisation.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)))
             # Get the current value of the variable if it exists and populate the field
-            elif (ma_level == 'composer'):
-                for composer in QgsProject.instance().layoutManager().printLayouts():
-                    if composer.name() == self.dlg.composerSelect.currentText():
+            elif (ma_level == 'layout'):
+                for layout in QgsProject.instance().layoutManager().printLayouts():
+                    if layout.name() == self.dlg.layoutSelect.currentText():
                         if ma_variable == 'ma_map_number':
-                            self.dlg.maMapNumber.setText(str(QgsExpressionContextUtils.layoutScope(composer).variable(ma_variable)))
+                            self.dlg.maMapNumber.setText(str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)))
                         elif ma_variable == 'ma_summary':
-                            self.dlg.maSummary.setText(str(QgsExpressionContextUtils.layoutScope(composer).variable(ma_variable)))
+                            self.dlg.maSummary.setText(str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)))
                         elif ma_variable == 'ma_language':
-                            self.dlg.maLanguage.setText(str(QgsExpressionContextUtils.layoutScope(composer).variable(ma_variable)))
+                            self.dlg.maLanguage.setText(str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)))
                         elif ma_variable == 'ma_datasource':
-                            self.dlg.maDatasource.setText(str(QgsExpressionContextUtils.layoutScope(composer).variable(ma_variable)))
+                            self.dlg.maDatasource.setText(str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)))
                         elif ma_variable == 'ma_title':
-                            self.dlg.maTitle.setText(str(QgsExpressionContextUtils.layoutScope(composer).variable(ma_variable)))
+                            self.dlg.maTitle.setText(str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)))
                        # elif ma_variable == 'ma_created':
-                        #    self.dlg.maCreated.setDate(str(QgsExpressionContextUtils.compositionScope(composer.composition()).variable(ma_variable)))
+                        #    self.dlg.maCreated.setDate(str(QgsExpressionContextUtils.compositionScope(layout.composition()).variable(ma_variable)))
             else:
                 QgsMessageLog.logMessage('Warning: level ' + str(ma_level),  'MapExport')
                 
@@ -225,7 +218,6 @@ class MapExport(object):
         settings = QSettings()
         
         # Remember the last export location (may need changing)
-        """ACTION: Fix, last loacation not remembered"""
 
         dir = settings.value('/UI/lastExportDir')  
         folderDialog = QFileDialog.getExistingDirectory(
@@ -241,7 +233,7 @@ class MapExport(object):
             self.dlg.path.setText(folderDialog)
 
     def checkFolder(self, outputDir):
-        """Ensure export's folder exists and is writeable."""
+        """Ensure export folder exists and is writeable."""
 
         # It'd be better to find a way to check writeability in the first try...
         try:
@@ -328,7 +320,7 @@ class MapExport(object):
     def restoreGui(self):
         """Reset the GUI to its initial state."""
 
-        # QTimer.singleShot(1000, lambda: self.dlg.pageBar.setValue(0))
+        QTimer.singleShot(1000, lambda: self.dlg.pageBar.setValue(0))
         # QTimer.singleShot(1000, lambda: self.dlg.updateBar.setValue(0))
         self.dlg.printinglabel.setText('')
         
@@ -353,8 +345,8 @@ class MapExport(object):
         self.dlg.updateBar.setValue(0)
         self.dlg.updateBar.setMaximum(11)
 
-        # self.dlg.composerSelect.currentIndex():
-        title = self.dlg.composerSelect.currentText()
+        # self.dlg.layoutSelect.currentIndex():
+        title = self.dlg.layoutSelect.currentText()
         self.dlg.printinglabel.setText(self.tr(u'Updating {}...').format(title))
 
         # process input events in order to allow canceling
@@ -377,24 +369,24 @@ class MapExport(object):
         # update LAYOUT variables from form
         """ACTION: Make this work"""
    
-        for composer in QgsProject.instance().layoutManager().printLayouts():
-            if composer.name() == self.dlg.composerSelect.currentText():
+        for layout in QgsProject.instance().layoutManager().printLayouts():
+            if layout.name() == self.dlg.layoutSelect.currentText():
                 QgsMessageLog.logMessage('Warning: value for ' + self.dlg.maSummary.toPlainText(), 'MapExport')
-                # Map Number QgsExpressionContextUtils.layoutScope(composer).variable(ma_variable)
+                # Map Number QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)
 
-                QgsExpressionContextUtils.setLayoutVariable(composer,'ma_map_number',self.dlg.maMapNumber.text())
+                QgsExpressionContextUtils.setLayoutVariable(layout,'ma_map_number',self.dlg.maMapNumber.text())
                 self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
                 # Map Title
-                QgsExpressionContextUtils.setLayoutVariable(composer,'ma_title',self.dlg.maTitle.text())
+                QgsExpressionContextUtils.setLayoutVariable(layout,'ma_title',self.dlg.maTitle.text())
                 self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
                 # Date Created
-                QgsExpressionContextUtils.setLayoutVariable(composer,'ma_created',self.dlg.maCreated.date())
+                QgsExpressionContextUtils.setLayoutVariable(layout,'ma_created',self.dlg.maCreated.date())
                 self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
                 # Map Summary
-                QgsExpressionContextUtils.setLayoutVariable(composer,'ma_summary',self.dlg.maSummary.toPlainText())
+                QgsExpressionContextUtils.setLayoutVariable(layout,'ma_summary',self.dlg.maSummary.toPlainText())
                 self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
                 # Data sources
-                QgsExpressionContextUtils.setLayoutVariable(composer,'ma_datasource',self.dlg.maDatasource.toPlainText())
+                QgsExpressionContextUtils.setLayoutVariable(layout,'ma_datasource',self.dlg.maDatasource.toPlainText())
                 self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
                 
         i = i + 1
@@ -426,12 +418,11 @@ class MapExport(object):
 
     def saveFile(self):
         """Check if the conditions are filled to export file(s) and
-        export the checked composers to the specified file format."""
-        """ACTION: Update terminology"""
+        export the checked layouts to the specified file format."""
 
-        # Ensure list of print composers is up to date
-        self.dlg.composerSelect.currentIndex()
-        cView = QgsProject.instance().layoutManager().layoutByName(self.dlg.composerSelect.currentText())
+        # Ensure list of print layouts is up to date
+        self.dlg.layoutSelect.currentIndex()
+        cView = QgsProject.instance().layoutManager().layoutByName(self.dlg.layoutSelect.currentText())
         
         # get the output directory
         folder = self.dlg.path.text()
@@ -447,8 +438,8 @@ class MapExport(object):
             self.initGuiButtons()
             QApplication.setOverrideCursor(Qt.BusyCursor)
 
-            # for self.dlg.composerSelect.currentIndex():
-            title = self.dlg.composerSelect.currentText()
+            # for self.dlg.layoutSelect.currentIndex():
+            title = self.dlg.layoutSelect.currentText()
             
             self.dlg.printinglabel.setText(
                 self.tr(u'Exporting {}...').format(title)
@@ -456,7 +447,7 @@ class MapExport(object):
 
             # process input events in order to allow canceling
             QCoreApplication.processEvents()
-            self.exportCompo(cView, folder, title)
+            self.exportLayout(cView, folder, title)
             i = i + 1
             QApplication.restoreOverrideCursor()
 
@@ -484,7 +475,7 @@ class MapExport(object):
             # Reset the GUI
             self.restoreGui()
             
-    def exportCompo(self, cView, folder, title):
+    def exportLayout(self, cView, folder, title):
         """Function that sets how to export files."""
         currProject = QgsProject.instance()
         printer = QPrinter()
@@ -552,16 +543,16 @@ class MapExport(object):
         - themes
         """
 
-        for composer in QgsProject.instance().layoutManager().printLayouts():
+        for layout in QgsProject.instance().layoutManager().printLayouts():
             # Set values of inbuitl variables
 
-            if composer.name() == self.dlg.composerSelect.currentText():
+            if layout.name() == self.dlg.layoutSelect.currentText():
                 date_now = datetime.date.today().strftime("%B %d, %Y")
                 ET.SubElement(mapdata,'lastUpdated').text = date_now
-                title = composer.name()
-                ET.SubElement(mapdata,'jpgfilename').text = composer.name() + '.jpg'
-                ET.SubElement(mapdata,'pdffilename').text = composer.name() + '.pdf'
-                item = composer.itemById('main')
+                title = layout.name()
+                ET.SubElement(mapdata,'jpgfilename').text = layout.name() + '.jpg'
+                ET.SubElement(mapdata,'pdffilename').text = layout.name() + '.pdf'
+                item = layout.itemById('main')
 
                 # Get the attr by name and call 
                 """ACTION: what do these messages do?"""
@@ -586,8 +577,8 @@ class MapExport(object):
                     elem_name = elem_name.strip()
                     ma_level = str(x[2])
                     ma_level = ma_level.strip()
-                    if ma_level == 'composer':
-                        elem_value = str(QgsExpressionContextUtils.layoutScope(composer).variable(ma_variable))
+                    if ma_level == 'layout':
+                        elem_value = str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable))
                         ET.SubElement(mapdata,elem_name).text = elem_value
                         if elem_value.strip():
                             QgsMessageLog.logMessage(ma_variable + ' exported as ' + elem_value, 'MapExport',Qgis.Info)
@@ -620,11 +611,11 @@ class MapExport(object):
     def run(self):
         """Run method that performs all the real work."""
 
-        # when no composer is in the project, display a message about the lack of composers and exit
+        # when no layout is in the project, display a message about the lack of layouts and exit
         if len(QgsProject.instance().layoutManager().printLayouts()) == 0:
             self.iface.messageBar().pushMessage(
                 'Map Export : ',
-                self.tr(u'There is currently no print composer in the project. '\
+                self.tr(u'There is currently no print layout in the project. '\
                 'Please create at least one before running this plugin.'),
                 level = Qgis.Info, duration = 5
                 )
@@ -633,15 +624,15 @@ class MapExport(object):
             self.renameDialog()
             # show the dialog and fill the widget the first time
             if not self.dlg.isVisible():
-                self.populateComposerSelect(self.dlg.composerSelect)
-                self.populateComposerSelect_2(self.dlg.composerSelect_2)
+                self.populateLayoutSelect(self.dlg.layoutSelect)
+                # self.populateLayoutSelect_2(self.dlg.layoutSelect_2)
                 self.dlg.show()
                 # Create a list from the metadata items CSV
                 with open(os.path.join(self.plugin_dir,"input/metadata_items.csv"), 'r') as metadata_file:
                     reader = csv.reader(metadata_file, delimiter=',')
                     metadata_list = list(reader)
                     # Call the function to populate metadata items in dialogue with current values
-                    self.populateMetadataItems(metadata_list,self.dlg.composerSelect)
+                    self.populateMetadataItems(metadata_list,self.dlg.layoutSelect)
             else:
                 # if the dialog is already opened but not on top of other windows
                 # Put it on the top of all other widgets,
