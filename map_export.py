@@ -32,10 +32,10 @@ import datetime
 import zipfile
 import xml.etree.cElementTree as ET
 from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QFileInfo, QDir, QUrl, QTimer, Qt, QObject
-from qgis.PyQt.QtWidgets import QAction, QListWidgetItem, QFileDialog, QDialogButtonBox, QMenu, QMessageBox, QApplication
+from qgis.PyQt.QtWidgets import QAction, QListWidgetItem, QFileDialog, QDialogButtonBox, QMenu, QMessageBox, QApplication, QCheckBox, QGroupBox
 from qgis.PyQt.QtGui import QIcon, QPainter, QCursor, QDesktopServices
 from qgis.PyQt.QtPrintSupport import QPrinter
-from qgis.core import QgsProject, QgsMapLayer, QgsLayoutExporter, QgsExpressionContextUtils
+from qgis.core import QgsProject, QgsMapLayer, QgsLayoutExporter, QgsExpressionContextUtils, QgsCoordinateReferenceSystem
 from qgis.utils import *
 from qgis.gui import QgsMessageBar
 import subprocess
@@ -161,7 +161,8 @@ class MapExport(object):
 
 
     def populateMetadataItems(self, m, layout):
-        """Called to populate the current value of metadata items in the Edit Metadata dialog
+        """Get the current value of metadata items from the variable and populate the Edit Metadata dialog
+        See updateVars to populate vars from th Edit Metadata UI
         Project first
         for metadata items
         if type = projects
@@ -177,16 +178,24 @@ class MapExport(object):
             elem_name = elem_name.strip()
             ma_level = str(x[2])
             ma_level = ma_level.strip()
+            proj_crs = QgsProject.instance().crs()
             if (ma_level == 'project'):
                 # get current value for each variable from project and populate field
+                # COUNTRY
                 if ma_variable == 'ma_country':
                     self.dlg.maCountry.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable('ma_variable')))
                 elif ma_variable == 'ma_crs':
-                    self.dlg.maCrs.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)))
+#                    self.dlg.maCrs.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)))
+                    self.dlg.maCrs.setText(str(QgsCoordinateReferenceSystem(proj_crs).description()))
                 elif ma_variable == 'ma_glide_number':
                     self.dlg.maGlide.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)))
                 elif ma_variable == 'ma_organisation':
                     self.dlg.maOrganisation.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)))
+                elif ma_variable == 'ma_opid':
+                    self.dlg.maOperationID.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)))
+                elif ma_variable == 'ma_sourceorg':
+                    self.dlg.maSourceOrg.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)))
+
             # Get the current value of the variable if it exists and populate the field
             elif (ma_level == 'layout'):
                 for layout in QgsProject.instance().layoutManager().printLayouts():
@@ -335,11 +344,12 @@ class MapExport(object):
         self.arret = False
 
     def updateVars(self):
+        """Set the value of the variables from the user-entered values in the Edit Metadata tab"""
         # Progress bar
         # check if all the mandatory infos are filled and if ok, export
         # Init progressbars
         i = 0
-        self.initGuiButtons()
+        # self.initGuiButtons()
         QApplication.setOverrideCursor(Qt.BusyCursor)
         currProject = QgsProject.instance()
         self.dlg.updateBar.setValue(0)
@@ -365,11 +375,14 @@ class MapExport(object):
         self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
         QgsExpressionContextUtils.setProjectVariable(currProject,'ma_language',self.dlg.maLanguage.text())
         self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
+        QgsExpressionContextUtils.setProjectVariable(currProject,'ma_opid',self.dlg.maOperationID.text())
+        self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
+        QgsExpressionContextUtils.setProjectVariable(currProject,'ma_sourceorg',self.dlg.maSourceOrg.text())
+        self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
 
         # update LAYOUT variables from form
-        """ACTION: Make this work"""
-   
         for layout in QgsProject.instance().layoutManager().printLayouts():
+            # Select the current layout
             if layout.name() == self.dlg.layoutSelect.currentText():
                 QgsMessageLog.logMessage('Warning: value for ' + self.dlg.maSummary.toPlainText(), 'MapExport')
                 # Map Number QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)
@@ -407,8 +420,8 @@ class MapExport(object):
         else:
             self.iface.messageBar().pushMessage(
                 self.tr(u'Operation finished : '),
-                self.tr(u'The maps have been '\
-                    'exported to "{}".'
+                self.tr(u'The metadata has been '\
+                    'updated.'
                     ).format(title),
                 level = Qgis.Info, duration = 50
                 )
@@ -503,7 +516,8 @@ class MapExport(object):
         mapdata = ET.SubElement(settings, "mapdata")
 
         # output fixed QGIS variables to XML
-        ET.SubElement(mapdata,'operationID').text = 'product-type-testing'
+        """ACTION - sort out these variables"""
+#        ET.SubElement(mapdata,'operationID').text = 'product-type-testing'
         ET.SubElement(mapdata,'versionNumber').text = '1'
         ET.SubElement(mapdata,'status').text = 'new'
         
@@ -513,6 +527,11 @@ class MapExport(object):
         xmax = str(self.iface.mapCanvas().extent().xMaximum())
         ymin = str(self.iface.mapCanvas().extent().yMinimum())
         ymax = str(self.iface.mapCanvas().extent().yMaximum())
+
+        # Output the CRS
+        # ACTION - is this needed for proj too?
+        crs = str(currProject.crs().description())
+        ET.SubElement(mapdata,'datum').text = crs
 
         #Output extent values to XML
         ET.SubElement(mapdata,'xmin').text = xmin
@@ -538,13 +557,20 @@ class MapExport(object):
 
         # output layout variables listed in CSV to XML
 
+#        themes = findChildren(self.dlg.themeBox)
+        themes = ET.SubElement(mapdata, "themes")
+        for theme in self.dlg.themeBox.findChildren(QCheckBox):
+            if theme.isChecked():
+                ET.SubElement(themes,'theme').text = theme.objectName()
+#        if self.dlg.agriculture.iChecked;
+
         """
         To add:
         - themes
         """
 
         for layout in QgsProject.instance().layoutManager().printLayouts():
-            # Set values of inbuitl variables
+            # Set values of internal variables
 
             if layout.name() == self.dlg.layoutSelect.currentText():
                 date_now = datetime.date.today().strftime("%B %d, %Y")
@@ -555,19 +581,16 @@ class MapExport(object):
                 item = layout.itemById('main')
 
                 # Get the attr by name and call 
-                """ACTION: what do these messages do?"""
-                # QgsMessageLog.logMessage('Warning: map item ' + str(item),  'MapExport')
-                # QgsMessageLog.logMessage('Warning: map item type ' + str(item.type),  'MapExport')
                 map_scale = getattr(item, 'scale')()
-                
+               
                 ET.SubElement(mapdata,'scale').text = str(map_scale)
                 map_extent = item.extent()
                 map_xmin = map_extent.xMinimum()
                 map_xmax = map_extent.xMaximum()
                 map_ymin = map_extent.yMinimum()
                 map_ymin = map_extent.yMaximum()
-                QgsMessageLog.logMessage('Scale 1 ' + str(map_xmin), 'MapExport', Qgis.Info)
-
+                QgsMessageLog.logMessage('Scale ' + str(map_xmin), 'MapExport', Qgis.Info)
+                
                 """ACTION: extent this to cover remaining extent fields, reconcile with earlier block"""
                 ET.SubElement(mapdata,'xmin').text = str(map_xmin)
                 
