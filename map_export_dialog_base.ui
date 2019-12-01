@@ -43,9 +43,9 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
-    <widget class="QTabWidget" name="tabWidget">
+    <widget class="QTabWidget" name="mapExport">
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -324,6 +324,9 @@ p, li { white-space: pre-wrap; }
        </property>
       </widget>
       <widget class="QLineEdit" name="maCrs">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="geometry">
         <rect>
          <x>120</x>
@@ -600,6 +603,299 @@ p, li { white-space: pre-wrap; }
        <property name="text">
         <string>TextLabel</string>
        </property>
+      </widget>
+      <widget class="QLineEdit" name="maOperationID">
+       <property name="geometry">
+        <rect>
+         <x>370</x>
+         <y>80</y>
+         <width>141</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_16">
+       <property name="geometry">
+        <rect>
+         <x>290</x>
+         <y>80</y>
+         <width>46</width>
+         <height>13</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string extracomment="test"/>
+       </property>
+       <property name="text">
+        <string>Op ID</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="maSourceOrg">
+       <property name="geometry">
+        <rect>
+         <x>370</x>
+         <y>110</y>
+         <width>141</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_17">
+       <property name="geometry">
+        <rect>
+         <x>290</x>
+         <y>110</y>
+         <width>71</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string extracomment="test"/>
+       </property>
+       <property name="text">
+        <string>Organisation</string>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="themesTab">
+      <attribute name="title">
+       <string>Themes</string>
+      </attribute>
+      <widget class="QGroupBox" name="themeBox">
+       <property name="geometry">
+        <rect>
+         <x>39</x>
+         <y>9</y>
+         <width>351</width>
+         <height>521</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Themes</string>
+       </property>
+       <widget class="QCheckBox" name="affPopulation">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>20</y>
+          <width>161</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Affected Population</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="agriculture">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>50</y>
+          <width>70</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Agriculture</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="appeals">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>80</y>
+          <width>70</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Appeals</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="campCoordination">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>110</y>
+          <width>121</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Camp Coordination</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="earlyRecovery">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>140</y>
+          <width>121</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Early Recovery</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="education">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>170</y>
+          <width>70</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Education</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="shelter">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>200</y>
+          <width>131</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Emergency Shelter</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="health">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>230</y>
+          <width>70</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Health</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="logistics">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>260</y>
+          <width>70</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Logistics</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="nutrition">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>290</y>
+          <width>70</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Nutrition</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="orientationReference">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>320</y>
+          <width>151</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Orientation and Reference</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="popBaseline">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>350</y>
+          <width>111</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Population Baseline</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="sarEvacuation">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>380</y>
+          <width>231</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Search and Rescue / Evacuation Planning</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="secSafety">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>410</y>
+          <width>251</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Security, Safety and Projection</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="sitDamage">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>440</y>
+          <width>151</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Situation and Damage</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="wash">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>470</y>
+          <width>191</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Water, Sanitation and Hygiene</string>
+        </property>
+       </widget>
       </widget>
      </widget>
     </widget>
