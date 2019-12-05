@@ -170,8 +170,56 @@ class MapExport(object):
         else
             get current value if any using selected print layout and name
         """
-
         currProject = QgsProject.instance()
+        # Check that all the variables exist, and if they don't, create them and give them a default value where appropriate
+        # ACTION - we are creating this list twice
+        with open(os.path.join(self.plugin_dir,"input/metadata_items.csv"), 'r') as metadata_file:
+            reader = csv.reader(metadata_file, delimiter=',')
+            metadata_list = list(reader)
+        for x in metadata_list:
+            ma_variable = str(x[0])
+            elem_name = str(x[1])
+            elem_name = elem_name.strip()
+            ma_level = str(x[2])
+            ma_level = ma_level.strip()
+            if (ma_level == 'project'):
+                if str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)) == 'None':
+                    QgsExpressionContextUtils.setProjectVariable(currProject, ma_variable, 'test')
+                    # QgsMessageLog.logMessage(ma_variable + '= ' + str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)), 'MapExport', Qgis.Info)
+                    """
+                    QgsMessageLog.logMessage(ma_variable + '= ' + str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)), 'MapExport', Qgis.Info)
+                except NameError:
+                    QgsMessageLog.logMessage(ma_variable + ' created!', 'MapExport', Qgis.Info)
+                
+                 
+                    
+
+elem_value = str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable))
+                ET.SubElement(mapdata,elem_name).text = elem_value
+                if elem_value.strip():
+                    QgsMessageLog.logMessage(ma_variable + ' exported as ' + elem_value, 'MapExport', Qgis.Info)
+                else:
+                    msgBar.pushMessage('Warning: missing value for ' + ma_variable,  5)
+                    QgsMessageLog.logMessage('Warning: missing value for ' + ma_variable, 'MapExport')
+                """
+    
+
+        # Populate values of Status combobox
+        self.dlg.maStatus.addItem('New')
+        self.dlg.maStatus.addItem('Correction')
+        self.dlg.maStatus.addItem('Update')
+
+        # Populate values of Access combobox
+        self.dlg.maAccess.addItem('Public')
+        self.dlg.maAccess.addItem('MapAction')
+        self.dlg.maAccess.addItem('Selected partners')
+
+        # Populate values of Language combobox
+        self.dlg.maLanguage.addItem('English')
+        self.dlg.maLanguage.addItem('French')
+        self.dlg.maLanguage.addItem('Spanish')
+
+       
         for x in m:
             ma_variable = str(x[0])
             elem_name = str(x[1])
@@ -204,12 +252,18 @@ class MapExport(object):
                             self.dlg.maMapNumber.setText(str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)))
                         elif ma_variable == 'ma_summary':
                             self.dlg.maSummary.setText(str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)))
-                        elif ma_variable == 'ma_language':
-                            self.dlg.maLanguage.setText(str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)))
                         elif ma_variable == 'ma_datasource':
                             self.dlg.maDatasource.setText(str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)))
                         elif ma_variable == 'ma_title':
                             self.dlg.maTitle.setText(str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)))
+                        elif ma_variable == 'ma_version':
+                            self.dlg.maVersion.setValue(int(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)))
+                        elif ma_variable == 'ma_status':
+                            self.dlg.maStatus.setCurrentText(str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)))
+                        elif ma_variable == 'ma_access':
+                            self.dlg.maAccess.setCurrentText(str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)))
+                        elif ma_variable == 'ma_language':
+                            self.dlg.maLanguage.setCurrentText(str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)))
                        # elif ma_variable == 'ma_created':
                         #    self.dlg.maCreated.setDate(str(QgsExpressionContextUtils.compositionScope(layout.composition()).variable(ma_variable)))
             else:
@@ -373,8 +427,6 @@ class MapExport(object):
         self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
         QgsExpressionContextUtils.setProjectVariable(currProject,'ma_country',self.dlg.maCountry.text())
         self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
-        QgsExpressionContextUtils.setProjectVariable(currProject,'ma_language',self.dlg.maLanguage.text())
-        self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
         QgsExpressionContextUtils.setProjectVariable(currProject,'ma_opid',self.dlg.maOperationID.text())
         self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
         QgsExpressionContextUtils.setProjectVariable(currProject,'ma_sourceorg',self.dlg.maSourceOrg.text())
@@ -400,6 +452,14 @@ class MapExport(object):
                 self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
                 # Data sources
                 QgsExpressionContextUtils.setLayoutVariable(layout,'ma_datasource',self.dlg.maDatasource.toPlainText())
+                self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
+                QgsExpressionContextUtils.setLayoutVariable(layout,'ma_version',self.dlg.maVersion.value())
+                self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
+                QgsExpressionContextUtils.setLayoutVariable(layout,'ma_status',self.dlg.maStatus.currentText())
+                self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
+                QgsExpressionContextUtils.setLayoutVariable(layout,'ma_access',self.dlg.maAccess.currentText())
+                self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
+                QgsExpressionContextUtils.setLayoutVariable(layout,'ma_language',self.dlg.maLanguage.currentText())
                 self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
                 
         i = i + 1
@@ -518,26 +578,26 @@ class MapExport(object):
         # output fixed QGIS variables to XML
         """ACTION - sort out these variables"""
 #        ET.SubElement(mapdata,'operationID').text = 'product-type-testing'
-        ET.SubElement(mapdata,'versionNumber').text = '1'
-        ET.SubElement(mapdata,'status').text = 'new'
+        # ET.SubElement(mapdata,'versionNumber').text = '1'
+        # ET.SubElement(mapdata,'status').text = 'new'
         
-        """ACTION: This seeems be getting the map canvas extent, but it should be the map extent in the layout"""
+        """ACTION: This seeems be getting the map canvas extent, but it should be the map extent in the layout
         map_extent = str(self.iface.mapCanvas().extent())
         xmin = str(self.iface.mapCanvas().extent().xMinimum())
         xmax = str(self.iface.mapCanvas().extent().xMaximum())
         ymin = str(self.iface.mapCanvas().extent().yMinimum())
-        ymax = str(self.iface.mapCanvas().extent().yMaximum())
+        ymax = str(self.iface.mapCanvas().extent().yMaximum())"""
 
         # Output the CRS
         # ACTION - is this needed for proj too?
         crs = str(currProject.crs().description())
         ET.SubElement(mapdata,'datum').text = crs
 
-        #Output extent values to XML
+        """#Output extent values to XML
         ET.SubElement(mapdata,'xmin').text = xmin
         ET.SubElement(mapdata,'xmax').text = xmax
         ET.SubElement(mapdata,'ymin').text = ymin
-        ET.SubElement(mapdata,'ymax').text = ymax
+        ET.SubElement(mapdata,'ymax').text = ymax"""
        
         # output project variables listed in CSV to XML
         for x in metadata_list:
@@ -593,6 +653,9 @@ class MapExport(object):
                 
                 """ACTION: extent this to cover remaining extent fields, reconcile with earlier block"""
                 ET.SubElement(mapdata,'xmin').text = str(map_xmin)
+                ET.SubElement(mapdata,'xmax').text = str(map_xmax)
+                ET.SubElement(mapdata,'ymin').text = str(map_ymin)
+                ET.SubElement(mapdata,'ymax').text = str(map_ymax)
                 
                 for x in metadata_list:
                     ma_variable = str(x[0])
