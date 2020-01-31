@@ -1,15 +1,19 @@
-ma_country, countries, project
-ma_crs, datum, project
-ma_glide_number, glidenumber, project
-ma_organisation, sourceorg, project
-ma_language, language, layout
-ma_created, Created, layout
-ma_map_number, mapNumber, layout
-ma_summary, summary, layout
-ma_title, title, layout
-ma_datasource, datasource, layout
-ma_opid, operationID, project
-ma_version, versionNumber, layout
-ma_status, status, layout
-ma_access, access, layout
-ma_web,,project
+"Variable name","XML Element name","Level","Default value","Edited or derived"
+"ma_country","countries","project","Country","edit"
+"ma_glide_number","glidenumber","project","FL-2020-000000-ABC","edit"
+"ma_organisation","sourceorg","project","Map,Action","edit"
+"ma_language","language","layout","English","edit"
+"ma_created","Created","layout","DD-MM-YYYY","edit"
+"ma_map_number","mapNumber","layout","MA001","edit"
+"ma_summary","summary","layout","Summary text, with comma","edit"
+"ma_title","title","layout","Map title","edit"
+"ma_datasource","datasource","layout",""Datasources,with comma"","edit"
+"ma_opid","operationID","project","Operation ID","edit"
+"ma_version","versionNumber","layout","01","edit"
+"ma_status","status","layout","Draft","edit"
+"ma_access","access","layout","Public","edit"
+"ma_web","website","project","www.mapaction.org","edit"
+"ma_crs","datum","project","derived"
+"ma_acknowledgements","no_xml","project","Acknowledgements","edit"
+"ma_disclaimer","no_xml","project","The depiction and use of boundaries, names and associated data shown here do not imply endorsement or acceptance by MapAction.","edit"
+"ma_email","no_xml","project","info@mapaction.org","edit"
