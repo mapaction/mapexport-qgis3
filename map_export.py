@@ -100,7 +100,7 @@ class MapExport(object):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
         self.action = QAction(QIcon(':/plugins/MapExport/icons/icon.png'),
-                              self.tr(u'Export JPG and PDF and zip up'),
+                              self.tr(u'Export JPG, PDF, metadata and zip up'),
                               self.iface.mainWindow()
                               )
        
@@ -150,19 +150,16 @@ class MapExport(object):
             self.dlg.layoutSelect.addItem(layout_name)
         # self.dlg.layoutName.setText(str(self.dlg.layoutSelect.currentText()))
 
-
     def on_layoutSelect_changed(self):
         """When changing the state of the "Check all" checkbox,
         do the same to the layouts listed below.
         """
-
         layout_name = self.dlg.layoutSelect.currentText()
         self.dlg.layoutName.setText(str(layout_name))
 
-
     def populateMetadataItems(self, m, layout):
-        """Get the current value of metadata items from the variable and populate the Edit Metadata dialog
-        See updateVars to populate vars from th Edit Metadata UI
+        """Get the current value of metadata items from the project or layout variable, and populate the Edit Metadata dialog
+        See *updateVars* to populate variable values from th Edit Metadata UI
         Project first
         for metadata items
         if type = projects
@@ -181,10 +178,11 @@ class MapExport(object):
             elem_name = str(x[1])
             elem_name = elem_name.strip()
             ma_level = str(x[2])
+            default_value = str(x[3])
             ma_level = ma_level.strip()
             if (ma_level == 'project'):
                 if str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)) == 'None':
-                    QgsExpressionContextUtils.setProjectVariable(currProject, ma_variable, 'test')
+                    QgsExpressionContextUtils.setProjectVariable(currProject, ma_variable, default_value)
                     # QgsMessageLog.logMessage(ma_variable + '= ' + str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)), 'MapExport', Qgis.Info)
                     """
                     QgsMessageLog.logMessage(ma_variable + '= ' + str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)), 'MapExport', Qgis.Info)
@@ -226,12 +224,13 @@ elem_value = str(QgsExpressionContextUtils.projectScope(currProject).variable(ma
             elem_name = elem_name.strip()
             ma_level = str(x[2])
             ma_level = ma_level.strip()
+            default_value = str(x[3])
             proj_crs = QgsProject.instance().crs()
             if (ma_level == 'project'):
                 # get current value for each variable from project and populate field
                 # COUNTRY
                 if ma_variable == 'ma_country':
-                    self.dlg.maCountry.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable('ma_variable')))
+                    self.dlg.maCountry.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)))
                 elif ma_variable == 'ma_crs':
 #                    self.dlg.maCrs.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)))
                     self.dlg.maCrs.setText(str(QgsCoordinateReferenceSystem(proj_crs).description()))
@@ -243,12 +242,18 @@ elem_value = str(QgsExpressionContextUtils.projectScope(currProject).variable(ma
                     self.dlg.maOperationID.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)))
                 elif ma_variable == 'ma_sourceorg':
                     self.dlg.maSourceOrg.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)))
+                elif ma_variable == 'ma_acknowledgements':
+                    self.dlg.maAcknowledgements.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)))
+                elif ma_variable == 'ma_disclaimer':
+                    self.dlg.maDisclaimer.setText(str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable)))
 
             # Get the current value of the variable if it exists and populate the field
             elif (ma_level == 'layout'):
                 for layout in QgsProject.instance().layoutManager().printLayouts():
                     if layout.name() == self.dlg.layoutSelect.currentText():
-                        if ma_variable == 'ma_map_number':
+                        if str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)) == 'None':
+                            QgsExpressionContextUtils.setLayoutVariable(layout, ma_variable, default_value)
+                        elif ma_variable == 'ma_map_number':
                             self.dlg.maMapNumber.setText(str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)))
                         elif ma_variable == 'ma_summary':
                             self.dlg.maSummary.setText(str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)))
@@ -351,8 +356,7 @@ elem_value = str(QgsExpressionContextUtils.projectScope(currProject).variable(ma
         if missed:
             self.iface.messageBar().pushMessage('Map Export : ',
                 self.tr(u'Please consider filling the mandatory field(s) outlined in red.'),
-                level = QgsMessageBar.CRITICAL,
-                duration = 5)
+                level = Qgis.Critical,duration = 5)
             return False
         # otherwise let's proceed the export
         else:
@@ -429,7 +433,9 @@ elem_value = str(QgsExpressionContextUtils.projectScope(currProject).variable(ma
         self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
         QgsExpressionContextUtils.setProjectVariable(currProject,'ma_opid',self.dlg.maOperationID.text())
         self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
-        QgsExpressionContextUtils.setProjectVariable(currProject,'ma_sourceorg',self.dlg.maSourceOrg.text())
+        QgsExpressionContextUtils.setProjectVariable(currProject,'ma_acknowledgements',self.dlg.maAcknowledgements.toPlainText())
+        self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
+        QgsExpressionContextUtils.setProjectVariable(currProject,'ma_disclaimer',self.dlg.maDisclaimer.toPlainText())
         self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
 
         # update LAYOUT variables from form
@@ -590,8 +596,9 @@ elem_value = str(QgsExpressionContextUtils.projectScope(currProject).variable(ma
 
         # Output the CRS
         # ACTION - is this needed for proj too?
-        crs = str(currProject.crs().description())
-        ET.SubElement(mapdata,'datum').text = crs
+        # this is in csv
+        # crs = str(currProject.crs().description())
+        # ET.SubElement(mapdata,'datum').text = crs
 
         """#Output extent values to XML
         ET.SubElement(mapdata,'xmin').text = xmin
@@ -606,7 +613,7 @@ elem_value = str(QgsExpressionContextUtils.projectScope(currProject).variable(ma
             elem_name = elem_name.strip()
             ma_level = str(x[2])
             ma_level = ma_level.strip()
-            if (ma_level == 'project'):
+            if (ma_level == 'project') and (elem_name != 'no_xml'):
                 elem_value = str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable))
                 ET.SubElement(mapdata,elem_name).text = elem_value
                 if elem_value.strip():
@@ -621,7 +628,8 @@ elem_value = str(QgsExpressionContextUtils.projectScope(currProject).variable(ma
         themes = ET.SubElement(mapdata, "themes")
         for theme in self.dlg.themeBox.findChildren(QCheckBox):
             if theme.isChecked():
-                ET.SubElement(themes,'theme').text = theme.objectName()
+                ET.SubElement(themes,'theme').text = theme.text()
+#                ET.SubElement(themes,'theme').text = theme.objectName()
 #        if self.dlg.agriculture.iChecked;
 
         """
@@ -638,24 +646,26 @@ elem_value = str(QgsExpressionContextUtils.projectScope(currProject).variable(ma
                 title = layout.name()
                 ET.SubElement(mapdata,'jpgfilename').text = layout.name() + '.jpg'
                 ET.SubElement(mapdata,'pdffilename').text = layout.name() + '.pdf'
-                item = layout.itemById('main')
+                # Action: Which map is selected by this?
+                item = layout.referenceMap()
+#                item = layout.itemById('main')
 
                 # Get the attr by name and call 
                 map_scale = getattr(item, 'scale')()
                
-                ET.SubElement(mapdata,'scale').text = str(map_scale)
+                ET.SubElement(mapdata,'scale').text = str(round(map_scale))
                 map_extent = item.extent()
                 map_xmin = map_extent.xMinimum()
                 map_xmax = map_extent.xMaximum()
                 map_ymin = map_extent.yMinimum()
-                map_ymin = map_extent.yMaximum()
+                map_ymax = map_extent.yMaximum()
                 QgsMessageLog.logMessage('Scale ' + str(map_xmin), 'MapExport', Qgis.Info)
                 
                 """ACTION: extent this to cover remaining extent fields, reconcile with earlier block"""
-                ET.SubElement(mapdata,'xmin').text = str(map_xmin)
-                ET.SubElement(mapdata,'xmax').text = str(map_xmax)
-                ET.SubElement(mapdata,'ymin').text = str(map_ymin)
-                ET.SubElement(mapdata,'ymax').text = str(map_ymax)
+                ET.SubElement(mapdata,'xmin').text = str(round(map_xmin))
+                ET.SubElement(mapdata,'xmax').text = str(round(map_xmax))
+                ET.SubElement(mapdata,'ymin').text = str(round(map_ymin))
+                ET.SubElement(mapdata,'ymax').text = str(round(map_ymax))
                 
                 for x in metadata_list:
                     ma_variable = str(x[0])
@@ -723,3 +733,4 @@ elem_value = str(QgsExpressionContextUtils.projectScope(currProject).variable(ma
                 # if the dialog is already opened but not on top of other windows
                 # Put it on the top of all other widgets,
                 self.dlg.activateWindow()
+
