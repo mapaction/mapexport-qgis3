@@ -156,6 +156,13 @@ class MapExport(object):
         """
         layout_name = self.dlg.layoutSelect.currentText()
         self.dlg.layoutName.setText(str(layout_name))
+        self.dlg.pageBar.setValue(0)
+        # Populate metadata items from variables if exist
+        with open(os.path.join(self.plugin_dir,"input/metadata_items.csv"), 'r') as metadata_file:
+            reader = csv.reader(metadata_file, delimiter=',')
+            metadata_list = list(reader)
+            # Call the function to populate metadata items in dialogue with current values
+            self.populateMetadataItems(metadata_list,layout_name)
 
     def populateMetadataItems(self, m, layout):
         """Get the current value of metadata items from the project or layout variable, and populate the Edit Metadata dialog
@@ -163,10 +170,10 @@ class MapExport(object):
         """
         currProject = QgsProject.instance()
         # Check that all the variables exist, and if they don't, create them and give them a default value where appropriate
-        with open(os.path.join(self.plugin_dir,"input/metadata_items.csv"), 'r') as metadata_file:
-            reader = csv.reader(metadata_file, delimiter=',')
-            metadata_list = list(reader)
-        for x in metadata_list:
+        # with open(os.path.join(self.plugin_dir,"input/metadata_items.csv"), 'r') as metadata_file:
+        #    reader = csv.reader(metadata_file, delimiter=',')
+        #    metadata_list = list(reader)
+        for x in m[1:]:
             ma_variable = str(x[0])
             elem_name = str(x[1])
             elem_name = elem_name.strip()
@@ -180,22 +187,25 @@ class MapExport(object):
     
         # Populate comboboxes
         # Populate values of Status combobox
+        self.dlg.maStatus.clear()
         self.dlg.maStatus.addItem('New')
         self.dlg.maStatus.addItem('Correction')
         self.dlg.maStatus.addItem('Update')
 
         # Populate values of Access combobox
+        self.dlg.maAccess.clear()
         self.dlg.maAccess.addItem('Public')
         self.dlg.maAccess.addItem('MapAction')
         self.dlg.maAccess.addItem('Selected partners')
 
         # Populate values of Language combobox
+        self.dlg.maLanguage.clear()
         self.dlg.maLanguage.addItem('English')
         self.dlg.maLanguage.addItem('French')
         self.dlg.maLanguage.addItem('Spanish')
        
         # Populate the Edit Metadata dialog with current values from variables
-        for x in m:
+        for x in m[1:]:
             ma_variable = str(x[0])
             elem_name = str(x[1])
             elem_name = elem_name.strip()
@@ -247,7 +257,7 @@ class MapExport(object):
                             self.dlg.maLanguage.setCurrentText(str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable)))
             else:
             # ACTION: update or remove this message
-                QgsMessageLog.logMessage('Warning: level ' + str(ma_level),  'MapExport')
+                QgsMessageLog.logMessage('Warning: Unknown level in CSV config - ' + str(ma_level),  'MapExport')
                 
     def browseDir(self):
         """Open the browser so the user selects the output directory."""
@@ -321,8 +331,8 @@ class MapExport(object):
                 x.setStyleSheet('border-color: palette()')
         # and if there are missing values, show error message and stop execution
         if missed:
-            self.iface.messageBar().pushMessage('Map Export : ',
-                self.tr(u'Please consider filling the mandatory field(s) outlined in red.'),
+            self.iface.messageBar().pushMessage('Map Export: ',
+                self.tr(u'Please complete the mandatory field(s) outlined in red.'),
                 level = Qgis.Critical,duration = 5)
             return False
         # otherwise let's proceed the export
@@ -354,7 +364,7 @@ class MapExport(object):
     def restoreGui(self):
         """Reset the GUI to its initial state."""
 
-        QTimer.singleShot(1000, lambda: self.dlg.pageBar.setValue(0))
+        # QTimer.singleShot(1000, lambda: self.dlg.pageBar.setValue(0))
         # QTimer.singleShot(1000, lambda: self.dlg.updateBar.setValue(0))
         self.dlg.printinglabel.setText('')
         
@@ -407,7 +417,7 @@ class MapExport(object):
         for layout in QgsProject.instance().layoutManager().printLayouts():
             # Select the current layout
             if layout.name() == self.dlg.layoutSelect.currentText():
-                QgsMessageLog.logMessage('Info: value for ' + self.dlg.maSummary.toPlainText(), 'MapExport')
+                # QgsMessageLog.logMessage('Info: value for ' + self.dlg.maSummary.toPlainText(), 'MapExport')
                 # Map Number
                 QgsExpressionContextUtils.setLayoutVariable(layout,'ma_map_number',self.dlg.maMapNumber.text())
                 self.dlg.updateBar.setValue(self.dlg.updateBar.value() + 1)
@@ -549,7 +559,7 @@ class MapExport(object):
         """ACTION?"""
        
         # output project variables listed in CSV to XML
-        for x in metadata_list:
+        for x in metadata_list[1:]:
             ma_variable = str(x[0])
             elem_name = str(x[1])
             elem_name = elem_name.strip()
@@ -558,6 +568,7 @@ class MapExport(object):
             if (ma_level == 'project') and (elem_name != 'no_xml'):
                 elem_value = str(QgsExpressionContextUtils.projectScope(currProject).variable(ma_variable))
                 ET.SubElement(mapdata,elem_name).text = elem_value
+                self.dlg.pageBar.setValue(self.dlg.pageBar.value() + 1)
                 if elem_value.strip():
                     QgsMessageLog.logMessage(ma_variable + ' exported as ' + elem_value, 'MapExport', Qgis.Info)
                 else:
@@ -598,7 +609,7 @@ class MapExport(object):
                 ET.SubElement(mapdata,'ymin').text = str(round(map_ymin))
                 ET.SubElement(mapdata,'ymax').text = str(round(map_ymax))
                 
-                for x in metadata_list:
+                for x in metadata_list[1:]:
                     ma_variable = str(x[0])
                     elem_name = str(x[1])
                     elem_name = elem_name.strip()
@@ -607,8 +618,10 @@ class MapExport(object):
                     if ma_level == 'layout':
                         elem_value = str(QgsExpressionContextUtils.layoutScope(layout).variable(ma_variable))
                         ET.SubElement(mapdata,elem_name).text = elem_value
+                        self.dlg.pageBar.setValue(self.dlg.pageBar.value() + 1)
                         if elem_value.strip():
                             QgsMessageLog.logMessage(ma_variable + ' exported as ' + elem_value, 'MapExport',Qgis.Info)
+                            
                         else:
                             msgBar.pushMessage('Warning: missing value for ' + ma_variable,  5)
                             QgsMessageLog.logMessage('Warning: missing value for ' + ma_variable, 'MapExport')
