@@ -137,6 +137,9 @@ p, li { white-space: pre-wrap; }
             <pointsize>8</pointsize>
            </font>
           </property>
+          <property name="toolTip">
+           <string>Browse to the export folder</string>
+          </property>
           <property name="text">
            <string>Choose export folder:</string>
           </property>
@@ -200,6 +203,9 @@ p, li { white-space: pre-wrap; }
             <height>0</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>Run the export process</string>
+          </property>
           <property name="text">
            <string>Export</string>
           </property>
@@ -215,6 +221,9 @@ p, li { white-space: pre-wrap; }
           </property>
           <property name="contextMenuPolicy">
            <enum>Qt::DefaultContextMenu</enum>
+          </property>
+          <property name="toolTip">
+           <string>Close the plugin dialogue</string>
           </property>
           <property name="standardButtons">
            <set>QDialogButtonBox::Cancel|QDialogButtonBox::Close</set>
@@ -258,6 +267,9 @@ p, li { white-space: pre-wrap; }
         <font>
          <pointsize>8</pointsize>
         </font>
+       </property>
+       <property name="toolTip">
+        <string>Check themes before export - not saved to metadata</string>
        </property>
        <property name="title">
         <string>Select all themes that apply:</string>
@@ -527,6 +539,9 @@ p, li { white-space: pre-wrap; }
             <pointsize>8</pointsize>
            </font>
           </property>
+          <property name="toolTip">
+           <string>Select layout to set metadata and export</string>
+          </property>
           <property name="text">
            <string>Select Print Layout:</string>
           </property>
@@ -544,6 +559,9 @@ p, li { white-space: pre-wrap; }
            <font>
             <pointsize>8</pointsize>
            </font>
+          </property>
+          <property name="toolTip">
+           <string>Select layout to set metadata and export</string>
           </property>
          </widget>
         </item>
@@ -622,6 +640,9 @@ p, li { white-space: pre-wrap; }
          <bold>false</bold>
         </font>
        </property>
+       <property name="toolTip">
+        <string>Active layout - set on Map Export tab</string>
+       </property>
        <property name="text">
         <string>TextLabel</string>
        </property>
@@ -663,6 +684,9 @@ p, li { white-space: pre-wrap; }
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>Country of mission</string>
+          </property>
          </widget>
         </item>
         <item row="0" column="2">
@@ -682,6 +706,9 @@ p, li { white-space: pre-wrap; }
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>MapAction operational ID</string>
           </property>
          </widget>
         </item>
@@ -708,6 +735,9 @@ p, li { white-space: pre-wrap; }
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>CRS of project (generated)</string>
           </property>
          </widget>
         </item>
@@ -744,7 +774,11 @@ p, li { white-space: pre-wrap; }
          </widget>
         </item>
         <item row="4" column="1">
-         <widget class="QLineEdit" name="maGlide"/>
+         <widget class="QLineEdit" name="maGlide">
+          <property name="toolTip">
+           <string>Glide number of emergency from ReliefWeb</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -801,6 +835,9 @@ p, li { white-space: pre-wrap; }
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>Standard text, do not amend</string>
+          </property>
           <property name="textInteractionFlags">
            <set>Qt::TextEditorInteraction</set>
           </property>
@@ -813,6 +850,9 @@ p, li { white-space: pre-wrap; }
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>Donor credits - check for mission-specific text</string>
           </property>
           <property name="textInteractionFlags">
            <set>Qt::TextEditorInteraction</set>
@@ -849,6 +889,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item row="1" column="5">
          <widget class="QgsSpinBox" name="maVersion">
+          <property name="toolTip">
+           <string>Version number of map</string>
+          </property>
           <property name="minimum">
            <number>1</number>
           </property>
@@ -875,6 +918,9 @@ p, li { white-space: pre-wrap; }
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>MapAction map number</string>
+          </property>
          </widget>
         </item>
         <item row="1" column="2">
@@ -898,6 +944,9 @@ p, li { white-space: pre-wrap; }
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>Date map was created</string>
+          </property>
          </widget>
         </item>
         <item row="2" column="0">
@@ -920,6 +969,9 @@ p, li { white-space: pre-wrap; }
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>Language used in template</string>
           </property>
           <property name="currentText">
            <string/>
@@ -947,6 +999,9 @@ p, li { white-space: pre-wrap; }
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>Publication status</string>
+          </property>
           <property name="currentText">
            <string/>
           </property>
@@ -967,6 +1022,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item row="2" column="5">
          <widget class="QComboBox" name="maAccess">
+          <property name="toolTip">
+           <string>Access level</string>
+          </property>
           <property name="currentText">
            <string/>
           </property>
@@ -1030,17 +1088,28 @@ p, li { white-space: pre-wrap; }
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QLineEdit" name="maTitle"/>
+         <widget class="QLineEdit" name="maTitle">
+          <property name="toolTip">
+           <string>Map title - do not include country</string>
+          </property>
+         </widget>
         </item>
         <item row="1" column="1">
          <widget class="QTextEdit" name="maSummary">
+          <property name="toolTip">
+           <string>Summary description of map</string>
+          </property>
           <property name="textInteractionFlags">
            <set>Qt::TextEditorInteraction</set>
           </property>
          </widget>
         </item>
         <item row="2" column="1">
-         <widget class="QTextEdit" name="maDatasource"/>
+         <widget class="QTextEdit" name="maDatasource">
+          <property name="toolTip">
+           <string>List all data sources used in map</string>
+          </property>
+         </widget>
         </item>
         <item row="3" column="0">
          <widget class="QPushButton" name="updateVarVals">
@@ -1056,6 +1125,9 @@ p, li { white-space: pre-wrap; }
             <weight>50</weight>
             <bold>false</bold>
            </font>
+          </property>
+          <property name="toolTip">
+           <string>Save current metadata values to the template before export</string>
           </property>
           <property name="text">
            <string>Save values to project</string>
