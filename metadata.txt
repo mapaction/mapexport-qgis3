@@ -12,7 +12,8 @@ qgisMinimumVersion=3.0
 description=Select a Print Layout, export a PDF, JPG and metadata, zip up the files.
 version=1.0.1
 about=This plugin supports MapAction's file upload processes, allowing a zip file to be created for upload to MapAction's Maps and Data Catalogue. The plugin creates a new folder (named using the Print Layout name) in a location of the user's choice, saves PDF and JPG exports of the Composer into it, creates a metadata XML file in the same location, then zips the folder contents, and saves it alongside the folder.
-author=Ant Scott (MapAction.org), based on the Maps Printer plugin, with thanks to Harrissou Sant-Anna (Conseil d'Architecture, d'Urbanisme et de l'Environnement du Maine-et-Loire)
+With thanks to Harrissou Sant-Anna (Conseil d'Architecture, d'Urbanisme et de l'Environnement du Maine-et-Loire) for the Maps Printer plugin, on which this was originally based.
+author=Ant Scott (MapAction.org)
 email=ascott@mapaction.org
 
 # End of mandatory metadata
@@ -20,7 +21,7 @@ email=ascott@mapaction.org
 # Optional items:
 
 # Uncomment the following line and add your changelog:
-changelog= v.0.1 (2017-09-14)
+changelog= v.1.0.1 (2020-02-22)
 
 # Tags are comma separated with spaces allowed
 tags = print, export, map, layout, metadata
