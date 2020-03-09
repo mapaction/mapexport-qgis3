@@ -340,7 +340,7 @@ p, li { white-space: pre-wrap; }
               </sizepolicy>
              </property>
              <property name="text">
-              <string>Camp Coordination / Management</string>
+              <string>Camp Coordination or Management</string>
              </property>
             </widget>
            </item>
@@ -491,7 +491,7 @@ p, li { white-space: pre-wrap; }
               </sizepolicy>
              </property>
              <property name="text">
-              <string>Search and Rescue / Evacuation Planning</string>
+              <string>Search and Rescue or Evacuation Planning</string>
              </property>
             </widget>
            </item>
@@ -504,7 +504,7 @@ p, li { white-space: pre-wrap; }
               </sizepolicy>
              </property>
              <property name="text">
-              <string>Security, Safety and Projection</string>
+              <string>Security and Safety and Protection</string>
              </property>
             </widget>
            </item>
@@ -530,7 +530,7 @@ p, li { white-space: pre-wrap; }
               </sizepolicy>
              </property>
              <property name="text">
-              <string>Water, Sanitation and Hygiene</string>
+              <string>Water Sanitation and Hygiene</string>
              </property>
             </widget>
            </item>
@@ -827,7 +827,7 @@ p, li { white-space: pre-wrap; }
          <x>40</x>
          <y>160</y>
          <width>541</width>
-         <height>392</height>
+         <height>131</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_3">
