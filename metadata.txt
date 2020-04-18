@@ -20,7 +20,8 @@ email=ascott@mapaction.org
 # Optional items:
 
 # Uncomment the following line and add your changelog:
-changelog= v.1.0.1 (2020-02-22)
+changelog=Version 1.0.2 (2020-04-18) - Minor bug fixes 
+    Version v.1.0.1 (2020-02-22) - Initial version
 
 # Tags are comma separated with spaces allowed
 tags = print, export, map, layout, metadata
