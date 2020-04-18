@@ -26,7 +26,7 @@ changelog= v.1.0.1 (2020-02-22)
 tags = print, export, map, layout, metadata
 
 homepage=https://github.com/mapaction/mapexport-qgis3
-tracker=https://github.com/mapaction/mapexport-qgis3
+tracker=https://github.com/mapaction/mapexport-qgis3/issues
 repository=https://github.com/mapaction/mapexport-qgis3
 icon=icons/icon.png
 # experimental flag
